@@ -1,0 +1,5 @@
+Backend/bin/
+Backend/obj/
+*.user
+.env
+node_modules/

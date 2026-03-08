@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kurslar — LearnPath</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .filter-select {
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .filter-select:focus { outline: none; border-color: var(--accent); }
+    .courses-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .course-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .course-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+    }
+    .course-tech {
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .course-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .course-desc {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .course-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .no-courses {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-secondary);
+      grid-column: 1/-1;
+    }
+    .loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-secondary);
+      grid-column: 1/-1;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">🚀 LearnPath</a>
+    <ul class="navbar-links">
+      <li><a href="../index.html">Bosh sahifa</a></li>
+      <li><a href="courses.html" style="color:var(--accent);">Kurslar</a></li>
+      <li><a href="roadmap.html">Roadmap</a></li>
+    </ul>
+    <div class="navbar-actions" id="navActions"></div>
+  </nav>
+
+  <div class="container" style="padding-top:2rem;">
+
+    <h1 style="margin-bottom:0.5rem;">📚 Barcha Kurslar</h1>
+    <p style="color:var(--text-secondary); margin-bottom:2rem;">
+      O'rganishni boshlash uchun kurs tanlang
+    </p>
+
+    <!-- SEARCH & FILTERS -->
+    <div class="search-bar" style="margin:0 0 1.5rem; max-width:100%;">
+      <input type="text" id="searchInput" placeholder="Kurs qidiring..."/>
+      <button class="btn btn-primary" onclick="applyFilters()">Qidirish</button>
+    </div>
+
+    <div class="filters">
+      <select class="filter-select" id="levelFilter" onchange="applyFilters()">
+        <option value="">Barcha darajalar</option>
+        <option value="beginner">Boshlang'ich</option>
+        <option value="intermediate">O'rta</option>
+        <option value="advanced">Yuqori</option>
+      </select>
+      <select class="filter-select" id="techFilter" onchange="applyFilters()">
+        <option value="">Barcha texnologiyalar</option>
+        <option value="HTML">HTML</option>
+        <option value="CSS">CSS</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="React">React</option>
+        <option value="C#">C#</option>
+        <option value="ASP.NET">ASP.NET</option>
+        <option value="Python">Python</option>
+      </select>
+      <button class="btn btn-outline" onclick="resetFilters()">Tozalash</button>
+    </div>
+
+    <!-- COURSES COUNT -->
+    <div class="courses-header">
+      <span style="color:var(--text-secondary);" id="coursesCount">Yuklanmoqda...</span>
+    </div>
+
+    <!-- COURSES GRID -->
+    <div class="grid" id="coursesGrid">
+      <div class="loading">⏳ Yuklanmoqda...</div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>© 2024 LearnPath — Bepul dasturlash platformasi</p>
+  </footer>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // Navbar
+    const user = getUser();
+    document.getElementById('navActions').innerHTML = user
+      ? `<a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+         <button class="btn btn-primary" onclick="logout()">Chiqish</button>`
+      : `<a href="login.html" class="btn btn-outline">Kirish</a>
+         <a href="register.html" class="btn btn-primary">Ro'yxatdan o'tish</a>`;
+
+    let allCourses = [];
+
+    async function loadCourses() {
+      try {
+        allCourses = await Courses.getAll();
+        renderCourses(allCourses);
+      } catch (e) {
+        document.getElementById('coursesGrid').innerHTML =
+          '<div class="no-courses">❌ Kurslar yuklanmadi. Backend ishlamoqdami?</div>';
+      }
+    }
+
+    function renderCourses(courses) {
+      const grid = document.getElementById('coursesGrid');
+      document.getElementById('coursesCount').textContent = `${courses.length} ta kurs topildi`;
+
+      if (courses.length === 0) {
+        grid.innerHTML = '<div class="no-courses">🔍 Kurs topilmadi</div>';
+        return;
+      }
+
+      grid.innerHTML = courses.map(c => `
+        <div class="course-card" onclick="window.location.href='course-detail.html?id=${c.id}'">
+          <div class="course-tech">${c.technology}</div>
+          <div class="course-title">${c.title}</div>
+          <div class="course-desc">${c.description}</div>
+          <div class="course-footer">
+            <span class="badge badge-${c.level?.toLowerCase()}">${c.level}</span>
+            <span class="stars">★ ${c.rating?.toFixed(1) || '0.0'}</span>
+          </div>
+          <div style="margin-top:0.8rem; color:var(--text-secondary); font-size:0.85rem;">
+            📖 ${c.lessonCount || 0} ta dars
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function applyFilters() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const level = document.getElementById('levelFilter').value;
+      const tech = document.getElementById('techFilter').value;
+
+      const filtered = allCourses.filter(c => {
+        const matchSearch = !search ||
+          c.title.toLowerCase().includes(search) ||
+          c.technology.toLowerCase().includes(search) ||
+          c.description.toLowerCase().includes(search);
+        const matchLevel = !level || c.level?.toLowerCase() === level;
+        const matchTech = !tech || c.technology === tech;
+        return matchSearch && matchLevel && matchTech;
+      });
+
+      renderCourses(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('levelFilter').value = '';
+      document.getElementById('techFilter').value = '';
+      renderCourses(allCourses);
+    }
+
+    // URL dan search parametrini olish
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      document.getElementById('searchInput').value = searchParam;
+    }
+
+    loadCourses().then(() => {
+      if (searchParam) applyFilters();
+    });
+  </script>
+</body>
+</html>
