@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roadmap — LearnPath</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .roadmap-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .roadmap-container {
+      position: relative;
+      padding: 2rem 0;
+    }
+    .roadmap-path {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .roadmap-node {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      width: 100%;
+      max-width: 700px;
+    }
+    .roadmap-node.right {
+      flex-direction: row-reverse;
+    }
+    .node-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .node-line {
+      width: 2px;
+      height: 40px;
+      background: var(--border);
+    }
+    .node-line.colored { background: var(--accent); }
+    .node-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      border: 3px solid var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .node-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .node-dot.completed { background: var(--success); }
+    .node-card {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 8px 0;
+    }
+    .node-card:hover {
+      border-color: var(--accent);
+      transform: scale(1.02);
+    }
+    .node-card.completed { border-color: var(--success); }
+    .node-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 0.3rem;
+    }
+    .node-desc {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+    .node-tech {
+      display: inline-block;
+      background: var(--bg-secondary);
+      color: var(--accent);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .tooltip {
+      position: fixed;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 1rem;
+      max-width: 260px;
+      z-index: 999;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .tooltip.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">🚀 LearnPath</a>
+    <ul class="navbar-links">
+      <li><a href="../index.html">Bosh sahifa</a></li>
+      <li><a href="courses.html">Kurslar</a></li>
+      <li><a href="roadmap.html" style="color:var(--accent);">Roadmap</a></li>
+    </ul>
+    <div class="navbar-actions" id="navActions"></div>
+  </nav>
+
+  <div class="container" style="padding-top:2rem; padding-bottom:4rem;">
+
+    <h1 style="margin-bottom:0.5rem;">🗺️ O'rganish Yo'llari</h1>
+    <p style="color:var(--text-secondary); margin-bottom:2rem;">
+      Qaysi yo'ldan bormoqchi ekanligingizni tanlang
+    </p>
+
+    <!-- TABS -->
+    <div class="roadmap-tabs">
+      <button class="tab-btn active" onclick="showRoadmap('frontend')">🎨 Frontend</button>
+      <button class="tab-btn" onclick="showRoadmap('backend')">⚙️ Backend</button>
+      <button class="tab-btn" onclick="showRoadmap('fullstack')">🚀 Fullstack</button>
+    </div>
+
+    <!-- ROADMAP -->
+    <div class="roadmap-container">
+      <div class="roadmap-path" id="roadmapPath"></div>
+    </div>
+
+  </div>
+
+  <!-- TOOLTIP -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const user = getUser();
+    document.getElementById('navActions').innerHTML = user
+      ? `<a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+         <button class="btn btn-primary" onclick="logout()">Chiqish</button>`
+      : `<a href="login.html" class="btn btn-outline">Kirish</a>
+         <a href="register.html" class="btn btn-primary">Ro'yxatdan o'tish</a>`;
+
+    const roadmaps = {
+      frontend: [
+        { title: 'HTML Asoslari', desc: 'Veb sahifa tuzilishi', tech: 'HTML', icon: '📄', search: 'HTML' },
+        { title: 'CSS va Dizayn', desc: 'Sahifani bezash', tech: 'CSS', icon: '🎨', search: 'CSS' },
+        { title: 'JavaScript', desc: 'Interaktivlik qo\'shish', tech: 'JavaScript', icon: '⚡', search: 'JavaScript' },
+        { title: 'React', desc: 'Zamonaviy UI yaratish', tech: 'React', icon: '⚛️', search: 'React' },
+      ],
+      backend: [
+        { title: 'C# Asoslari', desc: 'Dasturlash tillari', tech: 'C#', icon: '💎', search: 'C#' },
+        { title: 'ASP.NET Core', desc: 'Web API yaratish', tech: 'ASP.NET', icon: '⚙️', search: 'ASP.NET' },
+        { title: 'PostgreSQL', desc: 'Ma\'lumotlar bazasi', tech: 'SQL', icon: '🗄️', search: 'SQL' },
+        { title: 'Docker & Deploy', desc: 'Serverlarga joylashtirish', tech: 'DevOps', icon: '🐳', search: 'Docker' },
+      ],
+      fullstack: [
+        { title: 'HTML & CSS', desc: 'Frontend asoslari', tech: 'HTML/CSS', icon: '🌐', search: 'HTML' },
+        { title: 'JavaScript', desc: 'Dasturlash mantiq', tech: 'JavaScript', icon: '⚡', search: 'JavaScript' },
+        { title: 'C# & ASP.NET', desc: 'Backend yaratish', tech: 'C#', icon: '⚙️', search: 'C#' },
+        { title: 'React', desc: 'Frontend framework', tech: 'React', icon: '⚛️', search: 'React' },
+        { title: 'Database', desc: 'Ma\'lumotlarni saqlash', tech: 'SQL', icon: '🗄️', search: 'SQL' },
+        { title: 'Deploy', desc: 'Internetga chiqarish', tech: 'DevOps', icon: '🚀', search: 'Deploy' },
+      ]
+    };
+
+    let allCourses = [];
+
+    async function init() {
+      try {
+        allCourses = await Courses.getAll();
+      } catch (e) {}
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const type = urlParams.get('type') || 'frontend';
+      showRoadmap(type);
+    }
+
+    function showRoadmap(type) {
+      // Tab active
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active',
+          ['frontend','backend','fullstack'][i] === type);
+      });
+
+      const nodes = roadmaps[type];
+      const path = document.getElementById('roadmapPath');
+
+      path.innerHTML = nodes.map((node, i) => {
+        const isRight = i % 2 === 1;
+        const relatedCourse = allCourses.find(c =>
+          c.technology?.toLowerCase().includes(node.search.toLowerCase()) ||
+          node.search.toLowerCase().includes(c.technology?.toLowerCase())
+        );
+
+        return `
+          ${i > 0 ? `<div style="width:2px; height:40px; background:var(--accent); margin:0 auto;"></div>` : ''}
+          <div class="roadmap-node ${isRight ? 'right' : ''}" style="max-width:600px; margin:0 auto;">
+            <div class="node-card" onclick="nodeClick(${JSON.stringify(node).replace(/"/g, '&quot;')}, ${relatedCourse?.id || 0})">
+              <div style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
+                <span style="font-size:1.5rem;">${node.icon}</span>
+                <div>
+                  <div class="node-title">${node.title}</div>
+                  <div class="node-desc">${node.desc}</div>
+                </div>
+                <div style="margin-left:auto;">
+                  <span style="color:var(--text-secondary); font-size:0.8rem;">
+                    ${i + 1}/${nodes.length}
+                  </span>
+                </div>
+              </div>
+              <span class="node-tech">${node.tech}</span>
+              ${relatedCourse ? `
+                <div style="margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid var(--border);">
+                  <span style="color:var(--success); font-size:0.85rem;">
+                    ✅ Kurs mavjud: ${relatedCourse.title}
+                  </span>
+                </div>
+              ` : `
+                <div style="margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid var(--border);">
+                  <span style="color:var(--text-secondary); font-size:0.85rem;">
+                    📚 Tez kunda...
+                  </span>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function nodeClick(node, courseId) {
+      if (courseId) {
+        window.location.href = `course-detail.html?id=${courseId}`;
+      } else {
+        alert(`"${node.title}" kursi tez kunda qo'shiladi!`);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — LearnPath</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: calc(100vh - 64px);
+    }
+    .admin-sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+    .admin-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 0.3rem;
+      color: var(--text-secondary);
+    }
+    .admin-menu-item:hover { background: var(--bg-card); color: var(--text-primary); }
+    .admin-menu-item.active { background: var(--accent); color: white; }
+    .admin-content { padding: 2rem; }
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .stat-box .num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-box .lbl { color: var(--text-secondary); font-size: 0.9rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-card);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th {
+      background: var(--bg-secondary);
+      padding: 1rem;
+      text-align: left;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+    td { padding: 1rem; border-top: 1px solid var(--border); }
+    tr:hover td { background: rgba(108,99,255,0.05); }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 500px;
+    }
+    .modal h3 { margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display:block; margin-bottom:0.4rem; color:var(--text-secondary); font-size:0.9rem; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+    .form-group textarea { height: 100px; resize: vertical; }
+    .modal-actions { display:flex; gap:1rem; margin-top:1.5rem; }
+    .btn-danger { background: var(--danger); color: white; border:none; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">🚀 LearnPath</a>
+    <div style="color:var(--accent); font-weight:600;">⚙️ Admin Panel</div>
+    <div class="navbar-actions">
+      <button class="btn btn-primary" onclick="logout()">Chiqish</button>
+    </div>
+  </nav>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <div class="admin-sidebar">
+      <div class="admin-menu-item active" onclick="showSection('dashboard')">
+        📊 Dashboard
+      </div>
+      <div class="admin-menu-item" onclick="showSection('courses')">
+        📚 Kurslar
+      </div>
+      <div class="admin-menu-item" onclick="showSection('lessons')">
+        📖 Darslar
+      </div>
+      <div class="admin-menu-item" onclick="showSection('users')">
+        👥 Foydalanuvchilar
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="admin-content">
+
+      <!-- DASHBOARD -->
+      <div class="admin-section active" id="section-dashboard">
+        <h2 style="margin-bottom:1.5rem;">📊 Umumiy statistika</h2>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="num" id="statCourses">-</div>
+            <div class="lbl">Kurslar</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="statLessons">-</div>
+            <div class="lbl">Darslar</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">🟢</div>
+            <div class="lbl">Backend online</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">100%</div>
+            <div class="lbl">Bepul</div>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom:1rem;">🔥 Barcha kurslar</h3>
+        <table id="dashCourseTable">
+          <thead>
+            <tr>
+              <th>ID</th><th>Nomi</th><th>Texnologiya</th><th>Daraja</th><th>Reyting</th>
+            </tr>
+          </thead>
+          <tbody id="dashCourseBody"></tbody>
+        </table>
+      </div>
+
+      <!-- COURSES -->
+      <div class="admin-section" id="section-courses">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <h2>📚 Kurslarni boshqarish</h2>
+          <button class="btn btn-primary" onclick="openCourseModal()">+ Kurs qo'shish</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Nomi</th><th>Texnologiya</th><th>Daraja</th><th>Reyting</th><th>Amallar</th></tr>
+          </thead>
+          <tbody id="coursesTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- LESSONS -->
+      <div class="admin-section" id="section-lessons">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <h2>📖 Darslarni boshqarish</h2>
+          <button class="btn btn-primary" onclick="openLessonModal()">+ Dars qo'shish</button>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <select id="lessonCourseFilter" class="filter-select"
+            style="padding:0.6rem 1rem; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);"
+            onchange="loadLessonsTable()">
+            <option value="">Kurs tanlang</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Nomi</th><th>Kurs</th><th>Video</th><th>Amallar</th></tr>
+          </thead>
+          <tbody id="lessonsTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- USERS -->
+      <div class="admin-section" id="section-users">
+        <h2 style="margin-bottom:1.5rem;">👥 Foydalanuvchilar</h2>
+        <p style="color:var(--text-secondary);">Foydalanuvchilar ro'yxati (API orqali kengaytiriladi)</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COURSE MODAL -->
+  <div class="modal-overlay" id="courseModal">
+    <div class="modal">
+      <h3 id="courseModalTitle">Kurs qo'shish</h3>
+      <input type="hidden" id="courseId"/>
+      <div class="form-group">
+        <label>Nomi</label>
+        <input type="text" id="courseTitle" placeholder="Kurs nomi"/>
+      </div>
+      <div class="form-group">
+        <label>Tavsif</label>
+        <textarea id="courseDesc" placeholder="Kurs haqida..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Texnologiya</label>
+        <input type="text" id="courseTech" placeholder="HTML, CSS, JavaScript..."/>
+      </div>
+      <div class="form-group">
+        <label>Daraja</label>
+        <select id="courseLevel">
+          <option value="beginner">Boshlang'ich</option>
+          <option value="intermediate">O'rta</option>
+          <option value="advanced">Yuqori</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveCourse()">Saqlash</button>
+        <button class="btn btn-outline" onclick="closeModal('courseModal')">Bekor qilish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LESSON MODAL -->
+  <div class="modal-overlay" id="lessonModal">
+    <div class="modal">
+      <h3>Dars qo'shish</h3>
+      <div class="form-group">
+        <label>Kurs</label>
+        <select id="lessonCourseId"></select>
+      </div>
+      <div class="form-group">
+        <label>Dars nomi</label>
+        <input type="text" id="lessonTitle" placeholder="Dars nomi"/>
+      </div>
+      <div class="form-group">
+        <label>Kontent</label>
+        <textarea id="lessonContent" placeholder="Dars matni..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Video URL (ixtiyoriy)</label>
+        <input type="text" id="lessonVideo" placeholder="https://youtube.com/..."/>
+      </div>
+      <div class="form-group">
+        <label>Tartib raqami</label>
+        <input type="number" id="lessonOrder" placeholder="1" value="1"/>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveLesson()">Saqlash</button>
+        <button class="btn btn-outline" onclick="closeModal('lessonModal')">Bekor qilish</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // Admin tekshirish
+    const user = getUser();
+    if (!user || user.role !== 'admin') {
+      alert('Admin huquqi kerak!');
+      window.location.href = '../index.html';
+    }
+
+    let allCourses = [];
+
+    async function loadAll() {
+      try {
+        allCourses = await Courses.getAll();
+
+        // Stats
+        document.getElementById('statCourses').textContent = allCourses.length;
+        const totalLessons = allCourses.reduce((s, c) => s + (c.lessonCount || 0), 0);
+        document.getElementById('statLessons').textContent = totalLessons;
+
+        // Dashboard table
+        document.getElementById('dashCourseBody').innerHTML = allCourses.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.title}</td>
+            <td><span style="color:var(--accent)">${c.technology}</span></td>
+            <td><span class="badge badge-${c.level?.toLowerCase()}">${c.level}</span></td>
+            <td class="stars">★ ${c.rating?.toFixed(1)}</td>
+          </tr>
+        `).join('');
+
+        // Courses table
+        document.getElementById('coursesTableBody').innerHTML = allCourses.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.title}</td>
+            <td><span style="color:var(--accent)">${c.technology}</span></td>
+            <td><span class="badge badge-${c.level?.toLowerCase()}">${c.level}</span></td>
+            <td class="stars">★ ${c.rating?.toFixed(1)}</td>
+            <td>
+              <button class="btn btn-outline" style="padding:0.3rem 0.8rem; font-size:0.8rem;"
+                onclick="editCourse(${c.id})">✏️</button>
+              <button class="btn btn-danger" style="padding:0.3rem 0.8rem; font-size:0.8rem; border-radius:8px; cursor:pointer;"
+                onclick="deleteCourse(${c.id})">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+
+        // Lesson course selects
+        const options = allCourses.map(c =>
+          `<option value="${c.id}">${c.title}</option>`).join('');
+        document.getElementById('lessonCourseFilter').innerHTML =
+          '<option value="">Kurs tanlang</option>' + options;
+        document.getElementById('lessonCourseId').innerHTML = options;
+
+      } catch(e) {
+        alert('Ma\'lumot yuklanmadi: ' + e.message);
+      }
+    }
+
+    async function loadLessonsTable() {
+      const courseId = document.getElementById('lessonCourseFilter').value;
+      if (!courseId) return;
+      try {
+        const lessons = await Lessons.getByCourse(courseId);
+        const course = allCourses.find(c => c.id == courseId);
+        document.getElementById('lessonsTableBody').innerHTML = lessons.map(l => `
+          <tr>
+            <td>${l.orderNumber}</td>
+            <td>${l.title}</td>
+            <td>${course?.title}</td>
+            <td>${l.videoUrl ? '🎥 Ha' : '—'}</td>
+            <td>
+              <button class="btn btn-danger" style="padding:0.3rem 0.8rem; font-size:0.8rem; border-radius:8px; cursor:pointer;"
+                onclick="deleteLesson(${l.id})">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch(e) {}
+    }
+
+    function showSection(name) {
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.admin-menu-item').forEach(m => m.classList.remove('active'));
+      document.getElementById('section-' + name).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function openCourseModal(course = null) {
+      document.getElementById('courseModalTitle').textContent =
+        course ? 'Kursni tahrirlash' : 'Kurs qo\'shish';
+      document.getElementById('courseId').value = course?.id || '';
+      document.getElementById('courseTitle').value = course?.title || '';
+      document.getElementById('courseDesc').value = course?.description || '';
+      document.getElementById('courseTech').value = course?.technology || '';
+      document.getElementById('courseLevel').value = course?.level || 'beginner';
+      document.getElementById('courseModal').classList.add('show');
+    }
+
+    function editCourse(id) {
+      const course = allCourses.find(c => c.id === id);
+      if (course) openCourseModal(course);
+    }
+
+    async function saveCourse() {
+      const id = document.getElementById('courseId').value;
+      const dto = {
+        title: document.getElementById('courseTitle').value,
+        description: document.getElementById('courseDesc').value,
+        technology: document.getElementById('courseTech').value,
+        level: document.getElementById('courseLevel').value,
+      };
+      try {
+        if (id) await Courses.update(id, dto);
+        else await Courses.create(dto);
+        closeModal('courseModal');
+        await loadAll();
+        alert('✅ Saqlandi!');
+      } catch(e) { alert('Xato: ' + e.message); }
+    }
+
+    async function deleteCourse(id) {
+      if (!confirm('Kursni o\'chirishni tasdiqlaysizmi?')) return;
+      try {
+        await Courses.delete(id);
+        await loadAll();
+        alert('✅ O\'chirildi!');
+      } catch(e) { alert('Xato: ' + e.message); }
+    }
+
+    function openLessonModal() {
+      document.getElementById('lessonModal').classList.add('show');
+    }
+
+    async function saveLesson() {
+      const dto = {
+        courseId: parseInt(document.getElementById('lessonCourseId').value),
+        title: document.getElementById('lessonTitle').value,
+        content: document.getElementById('lessonContent').value,
+        videoUrl: document.getElementById('lessonVideo').value || null,
+        orderNumber: parseInt(document.getElementById('lessonOrder').value),
+      };
+      try {
+        await Lessons.create(dto);
+        closeModal('lessonModal');
+        await loadAll();
+        alert('✅ Dars qo\'shildi!');
+      } catch(e) { alert('Xato: ' + e.message); }
+    }
+
+    async function deleteLesson(id) {
+      if (!confirm('Darsni o\'chirishni tasdiqlaysizmi?')) return;
+      try {
+        await Lessons.delete(id);
+        loadLessonsTable();
+        alert('✅ O\'chirildi!');
+      } catch(e) { alert('Xato: ' + e.message); }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>

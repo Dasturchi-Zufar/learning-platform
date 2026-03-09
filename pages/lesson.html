@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dars — LearnPath</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .lesson-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 64px);
+    }
+    .lesson-sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .lesson-sidebar h3 {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .lesson-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 0.3rem;
+      font-size: 0.9rem;
+    }
+    .lesson-nav-item:hover { background: var(--bg-card); }
+    .lesson-nav-item.active {
+      background: var(--accent);
+      color: white;
+    }
+    .lesson-nav-item.completed { color: var(--success); }
+    .lesson-content {
+      padding: 2.5rem;
+      overflow-y: auto;
+    }
+    .lesson-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .lesson-header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .content-body {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      max-width: 720px;
+    }
+    .content-body p { margin-bottom: 1rem; }
+    .video-container {
+      margin: 2rem 0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-card);
+      padding: 1rem;
+      border: 1px solid var(--border);
+    }
+    .lesson-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .complete-btn {
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 0.8rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .complete-btn:hover { opacity: 0.9; }
+    .complete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    @media(max-width:768px) {
+      .lesson-layout { grid-template-columns: 1fr; }
+      .lesson-sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="navbar-logo">🚀 LearnPath</a>
+    <ul class="navbar-links">
+      <li><a href="../index.html">Bosh sahifa</a></li>
+      <li><a href="courses.html">Kurslar</a></li>
+    </ul>
+    <div class="navbar-actions" id="navActions"></div>
+  </nav>
+
+  <div class="lesson-layout">
+
+    <!-- SIDEBAR — darslar ro'yxati -->
+    <div class="lesson-sidebar">
+      <div style="margin-bottom:1.5rem;">
+        <a href="#" id="backToCourse" style="color:var(--accent); font-size:0.9rem;">
+          ← Kursga qaytish
+        </a>
+      </div>
+      <h3>Darslar</h3>
+      <div id="lessonNav">⏳ Yuklanmoqda...</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="lesson-content">
+      <div id="lessonBody">⏳ Yuklanmoqda...</div>
+    </div>
+
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const user = getUser();
+
+    // Login tekshirish
+    if (!user) {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('navActions').innerHTML = `
+      <a href="dashboard.html" class="btn btn-outline">Dashboard</a>
+      <button class="btn btn-primary" onclick="logout()">Chiqish</button>
+    `;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonId = parseInt(urlParams.get('id'));
+    const courseId = parseInt(urlParams.get('courseId'));
+
+    if (!lessonId || !courseId) window.location.href = 'courses.html';
+
+    document.getElementById('backToCourse').href = `course-detail.html?id=${courseId}`;
+
+    let allLessons = [];
+    let currentLesson = null;
+
+    async function loadLesson() {
+      try {
+        // Barcha darslarni yuklash (sidebar uchun)
+        allLessons = await Lessons.getByCourse(courseId);
+
+        // Sidebar
+        document.getElementById('lessonNav').innerHTML = allLessons.map(l => `
+          <div class="lesson-nav-item ${l.id === lessonId ? 'active' : ''}"
+               onclick="goToLesson(${l.id})">
+            <span>${l.orderNumber}.</span>
+            <span>${l.title}</span>
+          </div>
+        `).join('');
+
+        // Joriy darsni yuklash
+        currentLesson = await Lessons.getById(lessonId);
+
+        // Dars content
+        document.getElementById('lessonBody').innerHTML = `
+          <div class="lesson-header">
+            <div style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:0.5rem;">
+              Dars ${currentLesson.orderNumber}
+            </div>
+            <h1>${currentLesson.title}</h1>
+          </div>
+
+          ${currentLesson.videoUrl ? `
+            <div class="video-container">
+              <iframe width="100%" height="400"
+                src="${currentLesson.videoUrl}"
+                frameborder="0" allowfullscreen>
+              </iframe>
+            </div>
+          ` : ''}
+
+          <div class="content-body">
+            ${currentLesson.content.split('\n').map(p => `<p>${p}</p>`).join('')}
+          </div>
+
+          <div class="lesson-actions">
+            <button class="complete-btn" onclick="completeLesson()" id="completeBtn">
+              ✅ Darsni tugatdim
+            </button>
+            ${getNextLesson() ? `
+              <button class="btn btn-outline" onclick="goToLesson(${getNextLesson().id})">
+                Keyingi dars →
+              </button>
+            ` : `
+              <a href="course-detail.html?id=${courseId}" class="btn btn-outline">
+                🎉 Kurs tugadi!
+              </a>
+            `}
+          </div>
+        `;
+
+      } catch (e) {
+        document.getElementById('lessonBody').innerHTML =
+          '<p style="color:var(--danger);">Dars yuklanmadi</p>';
+      }
+    }
+
+    function getNextLesson() {
+      const idx = allLessons.findIndex(l => l.id === lessonId);
+      return allLessons[idx + 1] || null;
+    }
+
+    function goToLesson(id) {
+      window.location.href = `lesson.html?id=${id}&courseId=${courseId}`;
+    }
+
+    async function completeLesson() {
+      const btn = document.getElementById('completeBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Saqlanmoqda...';
+      try {
+        await Progress.complete({ courseId, lessonId });
+        btn.textContent = '✅ Bajarildi!';
+        btn.style.background = '#2d5a2d';
+
+        // Sidebar da belgilash
+        const navItems = document.querySelectorAll('.lesson-nav-item');
+        navItems.forEach(item => {
+          if (item.querySelector('span:first-child').textContent ===
+              `${currentLesson.orderNumber}.`) {
+            item.classList.add('completed');
+          }
+        });
+      } catch (e) {
+        btn.textContent = '❌ Xato: ' + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    loadLesson();
+  </script>
+</body>
+</html>

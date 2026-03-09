@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LearnPath — Dasturlashni o'rgan</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-logo">🚀 LearnPath</div>
+    <ul class="navbar-links">
+      <li><a href="index.html">Bosh sahifa</a></li>
+      <li><a href="pages/courses.html">Kurslar</a></li>
+      <li><a href="pages/roadmap.html">Roadmap</a></li>
+    </ul>
+    <div class="navbar-actions" id="navActions">
+      <a href="pages/login.html" class="btn btn-outline">Kirish</a>
+      <a href="pages/register.html" class="btn btn-primary">Ro'yxatdan o'tish</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>Dasturlashni <span>strukturali</span> o'rgan</h1>
+    <p>Vizual roadmap va interaktiv kurslar orqali professional dasturchi bo'l</p>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Kurs yoki texnologiya qidiring..."/>
+      <button class="btn btn-primary" onclick="searchCourses()">Qidirish</button>
+    </div>
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+      <a href="pages/roadmap.html" class="btn btn-primary">🗺️ Roadmapni ko'rish</a>
+      <a href="pages/courses.html" class="btn btn-outline">📚 Barcha kurslar</a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="container">
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; text-align:center; margin-bottom:4rem;">
+      <div class="card">
+        <div style="font-size:2rem; color:var(--accent);" id="totalCourses">0</div>
+        <div style="color:var(--text-secondary);">Kurslar</div>
+      </div>
+      <div class="card">
+        <div style="font-size:2rem; color:var(--accent);">5+</div>
+        <div style="color:var(--text-secondary);">Texnologiyalar</div>
+      </div>
+      <div class="card">
+        <div style="font-size:2rem; color:var(--accent);">100%</div>
+        <div style="color:var(--text-secondary);">Bepul</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POPULAR COURSES -->
+  <section class="container section">
+    <h2 class="section-title">🔥 Mashhur Kurslar</h2>
+    <div class="grid" id="popularCourses">
+      <div style="color:var(--text-secondary);">Yuklanmoqda...</div>
+    </div>
+    <div style="text-align:center; margin-top:2rem;">
+      <a href="pages/courses.html" class="btn btn-outline">Barcha kurslarni ko'rish →</a>
+    </div>
+  </section>
+
+  <!-- ROADMAP PREVIEW -->
+  <section class="container section">
+    <h2 class="section-title">🗺️ O'rganish yo'llari</h2>
+    <div class="grid">
+      <div class="card" onclick="window.location.href='pages/roadmap.html?type=frontend'">
+        <div style="font-size:2rem; margin-bottom:1rem;">🎨</div>
+        <h3>Frontend</h3>
+        <p style="color:var(--text-secondary); margin-top:0.5rem;">HTML → CSS → JavaScript → React</p>
+      </div>
+      <div class="card" onclick="window.location.href='pages/roadmap.html?type=backend'">
+        <div style="font-size:2rem; margin-bottom:1rem;">⚙️</div>
+        <h3>Backend</h3>
+        <p style="color:var(--text-secondary); margin-top:0.5rem;">C# → ASP.NET → Database → API</p>
+      </div>
+      <div class="card" onclick="window.location.href='pages/roadmap.html?type=fullstack'">
+        <div style="font-size:2rem; margin-bottom:1rem;">🚀</div>
+        <h3>Fullstack</h3>
+        <p style="color:var(--text-secondary); margin-top:0.5rem;">Frontend + Backend + Deploy</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2024 LearnPath — Bepul dasturlash platformasi</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Navbar: agar login bo'lgan bo'lsa
+    const user = getUser();
+    if (user) {
+      document.getElementById('navActions').innerHTML = `
+        <a href="pages/dashboard.html" class="btn btn-outline">Dashboard</a>
+        <button class="btn btn-primary" onclick="logout()">Chiqish</button>
+      `;
+    }
+
+    // Kurslarni yuklash
+    async function loadCourses() {
+      try {
+        const courses = await Courses.getAll();
+        document.getElementById('totalCourses').textContent = courses.length;
+
+        const top = courses.slice(0, 3);
+        document.getElementById('popularCourses').innerHTML = top.map(c => `
+          <div class="card" onclick="window.location.href='pages/course-detail.html?id=${c.id}'">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1rem;">
+              <span class="badge badge-${c.level?.toLowerCase()}">${c.level}</span>
+              <span class="stars">★ ${c.rating?.toFixed(1) || '0.0'}</span>
+            </div>
+            <h3 style="margin-bottom:0.5rem;">${c.title}</h3>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1rem;">${c.description?.slice(0, 80)}...</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:var(--accent); font-size:0.9rem;">${c.technology}</span>
+              <span style="color:var(--text-secondary); font-size:0.85rem;">${c.lessonCount} dars</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        document.getElementById('popularCourses').innerHTML =
+          '<p style="color:var(--text-secondary);">Kurslar yuklanmadi</p>';
+      }
+    }
+
+    function searchCourses() {
+      const q = document.getElementById('searchInput').value;
+      if (q) window.location.href = `pages/courses.html?search=${q}`;
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchCourses();
+    });
+
+    loadCourses();
+  </script>
+</body>
+</html>
