@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5034/api';
+const API_URL = 'https://learning-platform-api-r962.onrender.com/api';
 
 function getToken() {
   return localStorage.getItem('token');
